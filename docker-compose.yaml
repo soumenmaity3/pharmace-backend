@@ -1,0 +1,45 @@
+services:
+  app: #— defines your Spring Boot service.
+    build: . #— builds a Docker image using the Dockerfile in your current project directory.
+    container_name: pharmase-app #— gives the running container a recognizable name.
+    ports:
+      - "8080:8080" #— maps your computer's port 8080 to the container's port 8080
+    depends_on: #This tells Docker Compose to start PostgreSQL and Redis before starting the app.
+      - postgres
+      - redis
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pharmase #Where PostgreSQL is running
+      SPRING_DATASOURCE_USERNAME: soumen #Database username
+      SPRING_DATASOURCE_PASSWORD: "1234" #Database password
+      SPRING_DATA_REDIS_HOST: redis #Redis service name (redis is the name of the Redis service.)
+      SPRING_DATA_REDIS_PORT: 6379 #Redis port
+      JWT_SECRET: k9Xv2mQpL7nRjYwZdA3sBtHuEcFgNiOx+Wq1VyK8Ml0=
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:18
+    container_name: shop-postgres
+    environment:
+      POSTGRES_USER: soumen
+      POSTGRES_DB: pharmase
+      POSTGRES_PASSWORD: "1234"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_v2:/var/lib/postgresql
+    restart: unless-stopped
+  redis:
+    image: redis/redis-stack:latest
+    container_name: pharmase-redis #— names the container pharmase-redis.
+    ports:
+      - "6379:6379" #— exposes Redis on port 6379 on your computer.
+      - "8001:8001" #-- viewing data
+    volumes:
+      - redis_data:/data #store the data
+    environment:
+      REDIS_ARGS: "--appendonly yes" #REDIS_ARGS diye AOF persistence enable thakbe, ar default container startup Redis Stack-er web UI-o start korte parbe.(#— enables Redis AOF persistence, which records write operations so Redis can recover data after a restart.)
+    restart: unless-stopped
+volumes:
+  postgres_data:
+  postgres_data_v2:
+  redis_data:
