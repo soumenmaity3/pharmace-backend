@@ -40,6 +40,13 @@ public class EmployeeController {
     @GetMapping("owner-shopById/{ownerId}/{shopId}")
     public ResponseEntity<?> getShopById(@PathVariable("shopId") String shopId,
                                          @PathVariable("ownerId") String ownerId) {
-        return service.getShopById(shopId,ownerId);
+        return service.getShopById(shopId, ownerId);
+    }
+
+    @PutMapping("change-active/{shopId}/{empId}")
+    public ResponseEntity<?> changeActive(@RequestHeader("Authorization") String authHeader,
+                                          @PathVariable("empId") String empId,
+                                          @PathVariable("shopId") String shopId) {
+        return service.changeActive(authHeader, empId,shopId);
     }
 }

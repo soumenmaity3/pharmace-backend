@@ -27,6 +27,7 @@ public class ShopEmployee {
     @Enumerated(EnumType.STRING)
     private Role role;
     private Boolean isFromOwner = false;
+    private Boolean activeStatus = false;
     @CreationTimestamp
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;

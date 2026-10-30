@@ -140,6 +140,9 @@ public class EmployeeService {
 
 
     public ResponseEntity<?> getAllEmp(String authHeader, String shopId) {
+        String email = jwtService.extractUsername(
+                authorization.token(authHeader)
+        );
 
         if (shopId == null || shopId.isBlank()) {
             return ResponseEntity.badRequest()
@@ -163,29 +166,27 @@ public class EmployeeService {
 
         Shop shop = shopOptional.get();
 
-        String email = jwtService.extractUsername(
-                authorization.token(authHeader)
-        );
 
-        List<ShopEmployee> emp =
-                repo.findByEmailIgnoreCaseAndShopId(email, shop.getId());
+//        List<ShopEmployee> emp =
+//                repo.findByEmailIgnoreCaseAndShopId(email, shop.getId());
+        Optional<ShopOwner> owner =
+                ownerRepo.findById(shop.getOwner().getId());
 
-        Optional<ShopOwner> owner = ownerRepo.findById(shop.getId());
+        boolean isOwner = owner
+                .map(shopOwner ->
+                        shopOwner.getEmail().equalsIgnoreCase(email))
+                .orElse(false);
 
-        // Check whether the logged-in user is the shop owner
-        boolean isOwner = owner.isPresent();
+        Optional<ShopEmployee> manager =
+                repo.findByEmailAndShopId(email, uuid);
 
-        // Check whether the logged-in user is a manager
-        boolean isManager = emp.stream()
-                .anyMatch(employee ->
-                        employee.getRole() == Role.Manager
-                );
+        boolean isManager = manager
+                .map(employee -> employee.getRole() == Role.Manager)
+                .orElse(false);
 
-        // User must be the owner or a manager
         if (!isOwner && !isManager) {
-            log.info("Employee/Owner not found or insufficient permissions.");
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("Only the shop owner or a manager can access this feature.");
+                    .body("Only the shop owner or a manager can change employee status.");
         }
 
         List<ShopEmployee> allEmployee =
@@ -236,4 +237,83 @@ public class EmployeeService {
 
         return ResponseEntity.ok(response);
     }
+
+    public ResponseEntity<?> changeActive(
+            String authHeader, String empId, String shopId) {
+
+        String email = jwtService.extractUsername(authorization.token(authHeader));
+
+        UUID shopUuid;
+        UUID empUuid;
+
+        try {
+            shopUuid = UUID.fromString(shopId);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body("Invalid shop ID format");
+        }
+
+        try {
+            empUuid = UUID.fromString(empId);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body("Invalid Employee ID format");
+        }
+        Optional<Shop> shopOptional = shopRepo.findById(shopUuid);
+
+        if (shopOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Shop not found.");
+        }
+
+        Shop shop = shopOptional.get();
+
+        Optional<ShopOwner> owner =
+                ownerRepo.findById(shop.getOwner().getId());
+
+        boolean isOwner = owner
+                .map(shopOwner ->
+                        shopOwner.getEmail().equalsIgnoreCase(email))
+                .orElse(false);
+
+        Optional<ShopEmployee> manager =
+                repo.findByEmailAndShopId(email, shopUuid);
+
+        boolean isManager = manager
+                .map(employee -> employee.getRole() == Role.Manager)
+                .orElse(false);
+
+        if (!isOwner && !isManager) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Only the shop owner or a manager can change employee status.");
+        }
+
+        Optional<ShopEmployee> employeeOptional = repo.findById(empUuid);
+
+        if (employeeOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Employee not found.");
+        }
+
+        ShopEmployee selectedEmployee = employeeOptional.get();
+
+        if (!selectedEmployee.getShop().getId().equals(shopUuid)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Employee does not belong to this shop.");
+        }
+
+        if (selectedEmployee.getEmail().equalsIgnoreCase(email)) {
+            return ResponseEntity.badRequest()
+                    .body("You cannot change your own active status.");
+        }
+
+        selectedEmployee.setActiveStatus(
+                !selectedEmployee.getActiveStatus()
+        );
+
+        repo.save(selectedEmployee);
+
+        return ResponseEntity.ok(selectedEmployee);
+    }
+
 }

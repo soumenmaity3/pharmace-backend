@@ -122,6 +122,12 @@
             <version>4.1.0</version>
             <scope>compile</scope>
         </dependency>
+<!--        send email-->
+        <dependency>
+            <groupId>com.resend</groupId>
+            <artifactId>resend-java</artifactId>
+            <version>LATEST</version>
+        </dependency>
     </dependencies>
 
     <build>
