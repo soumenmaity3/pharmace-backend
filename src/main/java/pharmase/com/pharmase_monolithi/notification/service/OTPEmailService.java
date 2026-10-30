@@ -36,16 +36,16 @@ public class OTPEmailService {
     @Value("${resend.from}")
     private String from;
 
-    @Value("${pharmase.support-email:soumenmaity.fd2@gmail.com}")
+//    @Value("${pharmase.support-email:soumenmaity.fd2@gmail.com}")
     private String supportEmail;
 
-    @Value("${pharmase.help-url:https://yourdomain.com/help}")
+//    @Value("${pharmase.help-url:https://yourdomain.com/help}")
     private String helpUrl;
 
-    @Value("${pharmase.privacy-url:https://yourdomain.com/privacy}")
+//    @Value("${pharmase.privacy-url:https://yourdomain.com/privacy}")
     private String privacyUrl;
 
-    @Value("${pharmase.terms-url:https://yourdomain.com/terms}")
+//    @Value("${pharmase.terms-url:https://yourdomain.com/terms}")
     private String termsUrl;
 
     private Resend resend;
